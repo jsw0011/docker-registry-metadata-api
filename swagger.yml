@@ -1,0 +1,361 @@
+consumes:
+- application/json
+info:
+  title: Docker image metadata API
+  version: 0.0.1
+produces:
+- application/json
+schemes:
+- http
+swagger: "2.0"
+
+paths:
+  /metadata/images:
+    get:
+      tags:
+        - Image
+      summary: 'List of registered images in the metadata service'
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'List of registered images in the metadata service'
+          schema:
+            $ref: "#/definitions/ListOfImages"
+        '500':
+          description: 'Internal Error Message'
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /metadata:
+    post:
+      tags:
+        - ImageTag
+      summary: 'Register image with tag'
+      description: 'Register and verify if the image exists in docker registry'
+      produces:
+        - application/json
+      consumes:
+        - application/json
+
+      parameters:
+        - in: body
+          name: Image
+          schema:
+            type: object
+            properties: 
+              ImageName:
+                type: string
+              TagName:
+                type: string
+
+      responses:
+        '201':
+          description: 'Created'
+        '409':
+          description: 'Image already exists'
+          schema:
+            $ref: "#/definitions/ConflictResponse"
+        '424':
+          description: 'Failed Dependency'
+          schema:
+            $ref: "#/definitions/FailedDependency"
+        '500':
+          description: 'Internal Error Message'
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /metadata/image:
+    post:
+      tags:
+        - ImageTag
+      summary: 'List of registered image tags in the metadata service'
+      parameters:
+        - in: body
+          name: Image
+          schema:
+            type: object
+            properties: 
+              ImageName:
+                type: string
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'List of registered image tags in the metadata service'
+          schema:
+            type: array
+            items:
+              type: string
+        '404':
+          description: 'Image with tag not found'
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+        '500':
+          description: 'Internal Error Message'
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    delete:
+      tags:
+        - Image
+      summary: 'Unregister image from metadata database'
+      description: 'All tags and metadata will be removed'
+      produces:
+        - application/json
+      consumes:
+        - application/json
+
+      parameters:
+        - in: body
+          name: Image
+          schema:
+            type: object
+            properties: 
+              ImageName:
+                type: string
+      responses:
+        '200':
+          description: 'Removed successfully'
+          schema:
+            type: array
+            description: List of removed tags
+            items: 
+              type: string
+        '404':
+          description: 'Any image not found in database'
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+        '500':
+          description: 'Internal Error Message'
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /metadata/image/tag:
+    delete:
+      tags:
+        - ImageTag
+      summary: 'Remove tag'
+      description: 'Remove tag and all its metadata'
+      produces:
+        - application/json
+      consumes:
+        - application/json
+
+      parameters:
+        - in: body
+          name: Image
+          schema:
+            type: object
+            properties: 
+              ImageName:
+                type: string
+              TagName:
+                type: string
+      responses:
+        '200':
+          description: 'Erased'
+        '404':
+            description: 'Image with tag not found'
+            schema:
+              $ref: "#/definitions/NotFoundResponse"
+        '500':
+          description: 'Internal Error Message'
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+      tags:
+        - Metadata
+      summary: 'Get metadata'
+      parameters:
+        - in: body
+          name: Image
+          schema:
+            type: object
+            properties: 
+              ImageName:
+                type: string
+              TagName:
+                type: string
+      responses:
+        '200':
+          description: 'List of registered image tags in the metadata service'
+          schema:
+            $ref: "#/definitions/Metadata"
+        '404':
+          description: 'Image with tag not found'
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+        '500':
+          description: 'Internal Error Message'
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /metadata/image/tag/keys:
+    post:
+      tags:
+        - Metadata
+      summary: 'Create new key in metadata'
+      description: 'Create new metadata key and (optional) new default value'
+      produces:
+        - application/json
+      consumes:
+        - application/json
+
+      parameters:
+        - in: body
+          name: Image
+          schema:
+            type: object
+            properties: 
+              ImageName:
+                type: string
+              TagName:
+                type: string
+              Key:
+                type: string
+              Value:
+                type: string
+                x-nullable: true
+
+      responses:
+        '201':
+          description: 'Created'
+        '404':
+          description: 'Image with tag not found'
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+        '409':
+          description: 'Key already exists'
+          schema:
+            $ref: "#/definitions/ConflictResponse"
+        '500':
+          description: 'Internal Error Message'
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    put:
+      tags:
+        - Metadata
+      summary: 'Update default value of specified key'
+      description: 'Update default value of specified key'
+      produces:
+        - application/json
+      consumes:
+        - application/json
+
+      parameters:
+        - in: body
+          name: Image
+          schema:
+            type: object
+            properties: 
+              ImageName:
+                type: string
+              TagName:
+                type: string
+              Key:
+                type: string
+              Value:
+                type: string
+
+      responses:
+        '200':
+          description: 'Successfully updated'
+        '404':
+          description: 'Not Found'
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+        '500':
+          description: 'Internal Error Message'
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    delete:
+      tags:
+        - Metadata
+      summary: 'Remove key from metadata'
+      description: 'Remove metadata key'
+      produces:
+        - application/json
+      consumes:
+        - application/json
+
+      parameters:
+        - in: body
+          name: Image
+          schema:
+            type: object
+            properties: 
+              ImageName:
+                type: string
+              TagName:
+                type: string
+              Key:
+                type: string
+
+      responses:
+        '200':
+          description: 'Successfully removed'
+        '404':
+          description: 'Not Found'
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+        '500':
+          description: 'Internal Error Message'
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  ListOfImages:
+    type: array
+    items: 
+      type: string
+  Tags:
+    type: array
+    items: 
+      type: string
+  Metadata:
+    type: array
+    items: 
+      $ref: "#/definitions/MetadataObj"
+  MetadataObj:
+    type: object
+    properties: 
+      Key:
+        type: string
+      Value:
+        x-nullable: true
+        x-go-type: sql.NullString
+  DeletedTagResponse:
+    type: object
+    properties:
+      Image:
+        type: string
+      Tag:
+        type: string
+      Message:
+        type: string
+  DeletedKeyResponse:
+    type: object
+    properties:
+      Image:
+        type: string
+      Tag:
+        type: string
+      Key:
+        type: string
+  FailedDependency:
+    type: object
+    properties:
+      Message:
+        type: string
+  ConflictResponse:
+    type: object
+    properties:
+      Message:
+        type: string
+  NotFoundResponse:
+    type: object
+    properties:
+      Message:
+        type: string
+  ErrorResponse:
+    type: object
+    properties:
+      Message:
+        type: string

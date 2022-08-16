@@ -1,0 +1,27 @@
+FROM golang:1.16-alpine AS build
+
+WORKDIR /app
+COPY ./ ./
+
+RUN go mod download
+
+WORKDIR /app/server
+RUN go get .
+RUN go build -a -ldflags "-extldflags \"-static\" -X main.version=v0.0.1-" -o ./docker_image_metadata_api
+
+FROM golang:1.16-alpine as deploy
+# Update and certs install
+RUN apk update && apk add --no-cache git ca-certificates && update-ca-certificates
+
+# Set the workdir
+WORKDIR /
+
+## Add the wait script to the image
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.7.3/wait /wait
+RUN chmod +x /wait
+
+# Copying the binary
+COPY --from=builder /docker_image_metadata_api .
+
+# Entrypoint
+CMD /wait && /docker_image_metadata_api -p 8080 -l DEBUG
